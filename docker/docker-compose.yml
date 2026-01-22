@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  cpp-app:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile.cplus
+    container_name: calculator-cpp
+    volumes:
+      - ../src:/app/src
+
+  python-app:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile.python
+    container_name: calculator-python
+    volumes:
+      - ../python_app:/app
