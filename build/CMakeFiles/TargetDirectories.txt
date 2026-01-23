@@ -1,0 +1,5 @@
+C:/DevOpsProject/build/CMakeFiles/calculator_app.dir
+C:/DevOpsProject/build/CMakeFiles/calculator_test.dir
+C:/DevOpsProject/build/CMakeFiles/RUN_TESTS.dir
+C:/DevOpsProject/build/CMakeFiles/ALL_BUILD.dir
+C:/DevOpsProject/build/CMakeFiles/ZERO_CHECK.dir
