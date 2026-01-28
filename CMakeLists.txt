@@ -1,20 +1,21 @@
-cmake_minimum_required(VERSION 3.15)
-project(CalculatorApp VERSION 1.0)
+cmake_minimum_required(VERSION 3.10)
+project(Calculator VERSION 1.0)
 
-# Set C++ standard
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_C_STANDARD 11)
 
-# Find packages
-find_package(GTest REQUIRED)
+# Main executable
+add_executable(calculator 
+    src/calculator.c 
+    src/main.c
+)
 
-# Add main executable
-add_executable(calculator_app src/main.cpp src/calculator.cpp src/calculator.h)
+# Include directories
+target_include_directories(calculator PUBLIC src)
 
-# Add test executable
-add_executable(calculator_test tests/calculator_test.cpp src/calculator.cpp src/calculator.h)
-target_link_libraries(calculator_test GTest::gtest GTest::gtest_main)
-
-# Enable testing
+# Testing (optional section)
 enable_testing()
-add_test(NAME CalculatorTests COMMAND calculator_test)
+
+# Add test directory if it exists
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+    add_subdirectory(tests)
+endif()

@@ -1,7 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"C:/DevOpsProject/build/cmake_install.cmake"
-	],
-	"Parallel" : false
-}

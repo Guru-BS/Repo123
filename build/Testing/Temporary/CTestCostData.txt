@@ -1,2 +1,0 @@
-CalculatorTests 2 0.0255383
----

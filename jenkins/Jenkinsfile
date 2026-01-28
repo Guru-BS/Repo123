@@ -1,95 +1,55 @@
 pipeline {
     agent any
     
-    tools {
-        cmake 'Default'
-        msbuild 'Default'
-    }
-    
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                git 'https://github.com/yourusername/calculator-project.git'
             }
         }
         
-        stage('CMake Configure') {
+        stage('Build') {
             steps {
-                bat '''
-                    cd %WORKSPACE%
-                    mkdir build
+                sh '''
+                    mkdir -p build
                     cd build
-                    cmake .. -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -G "Visual Studio 17 2022" -A x64
+                    cmake ..
+                    make
                 '''
             }
         }
         
-        stage('Build C++') {
+        stage('Test') {
             steps {
-                bat '''
-                    cd %WORKSPACE%\\build
-                    cmake --build . --config Debug
+                sh '''
+                    cd build
+                    ./test_calculator
                 '''
-            }
-        }
-        
-        stage('Test C++') {
-            steps {
-                bat '''
-                    cd %WORKSPACE%\\build
-                    ctest --output-on-failure
-                '''
-            }
-        }
-        
-        stage('Test Python') {
-            steps {
-                bat '''
-                    cd %WORKSPACE%\\python_app
-                    python -m pytest -v --junitxml=test-results.xml
-                '''
-            }
-            post {
-                always {
-                    junit 'python_app/test-results.xml'
-                }
             }
         }
         
         stage('Docker Build') {
             steps {
-                script {
-                    docker.build('calculator-cpp', '-f docker/Dockerfile.cplus .')
-                    docker.build('calculator-python', '-f docker/Dockerfile.python .')
-                }
+                sh 'docker build -t calculator:latest -f docker/Dockerfile.dev .'
             }
         }
         
-        stage('Docker Test') {
-            steps {
-                script {
-                    docker.image('calculator-cpp').run('--rm')
-                    docker.image('calculator-python').run('--rm')
-                }
+        stage('Deploy') {
+            when {
+                branch 'main'
             }
-        }
-        
-        stage('Archive') {
             steps {
-                archiveArtifacts artifacts: 'build/Debug/calculator_app.exe', fingerprint: true
+                sh 'echo "Deploying application..."'
+                // Add deployment steps here
             }
         }
     }
+
+
     
     post {
         always {
             cleanWs()
-        }
-        success {
-            echo 'Pipeline succeeded!'
-        }
-        failure {
-            echo 'Pipeline failed!'
         }
     }
 }

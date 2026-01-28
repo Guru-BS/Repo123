@@ -1,10 +1,9 @@
-#pragma once
-#include <stdexcept>
+#ifndef CALCULATOR_H
+#define CALCULATOR_H
 
-class Calculator {
-public:
-    int add(int a, int b);
-    int subtract(int a, int b);
-    int multiply(int a, int b);
-    double divide(int a, int b);
-};
+double add(double a, double b);
+double subtract(double a, double b);
+double multiply(double a, double b);
+double divide(double a, double b);
+
+#endif
