@@ -1,120 +1,66 @@
 pipeline {
     agent {
         docker {
-            image 'gcc:12.2.0'
-            args '--user root'  // Run as root inside container
+            image 'gcc:12.2.0'  // Base image with GCC
+            args '--user root'  // Run as root
         }
-    }
-    
-    environment {
-        BUILD_DIR = 'build'
     }
     
     stages {
         stage('Checkout') {
             steps {
-                echo '📥 Checking out source code...'
                 checkout scm
             }
         }
         
-        stage('Install Dependencies') {
+        stage('Setup Environment') {
             steps {
-                echo '📦 Installing dependencies...'
                 sh '''
+                    # Update and install dependencies
                     apt-get update
-                    apt-get install -y \
-                        cmake \
-                        make \
-                        libgtest-dev
+                    apt-get install -y cmake libgtest-dev
                     
-                    # Build Google Test
+                    # Build GTest
                     cd /usr/src/gtest
                     cmake CMakeLists.txt
                     make
                     cp lib/*.a /usr/lib
-                    cd -
                 '''
             }
         }
         
         stage('Build') {
             steps {
-                echo '🔨 Building project...'
                 sh '''
-                    rm -rf ${BUILD_DIR}
-                    mkdir -p ${BUILD_DIR}
-                    cd ${BUILD_DIR}
+                    mkdir -p build
+                    cd build
                     cmake .. -DBUILD_TESTS=ON
-                    make -j4
-                    echo "=== Build completed ==="
-                    ls -la
+                    make
                 '''
             }
         }
         
         stage('Test') {
             steps {
-                echo '🧪 Running tests...'
                 sh '''
-                    cd ${BUILD_DIR}
-                    echo "=== Test Results ==="
-                    ./tests/calculator_test --gtest_color=yes
+                    cd build
+                    ./tests/calculator_test
                     ./tests/calculator_test --gtest_output=xml:test-results.xml
                 '''
-            }
-            post {
-                always {
-                    junit 'build/test-results.xml'
-                }
-            }
-        }
-        
-        stage('Run Application') {
-            steps {
-                echo '🚀 Running application...'
-                sh '''
-                    cd ${BUILD_DIR}
-                    echo "=== Application Output ==="
-                    ./calculator_app
-                '''
+                junit 'build/test-results.xml'
             }
         }
         
         stage('Package') {
             steps {
-                echo '📦 Creating package...'
                 sh '''
-                    mkdir -p package
-                    cp ${BUILD_DIR}/calculator_app package/
-                    cp ${BUILD_DIR}/tests/calculator_test package/
-                    cp -r src package/
-                    cp CMakeLists.txt package/
-                    cp Jenkinsfile package/
-                    
-                    echo "Calculator CI/CD Build" > package/README.txt
-                    echo "Build Number: ${BUILD_NUMBER}" >> package/README.txt
-                    echo "Build Date: $(date)" >> package/README.txt
-                    
-                    tar -czf calculator-${BUILD_NUMBER}.tar.gz package/
-                    echo "=== Package created ==="
-                    ls -lh *.tar.gz
+                    mkdir -p output
+                    cp build/calculator_app output/
+                    cp -r src output/
+                    tar -czf calculator.tar.gz output/
                 '''
-                archiveArtifacts artifacts: '*.tar.gz', fingerprint: true
+                archiveArtifacts artifacts: 'calculator.tar.gz'
             }
-        }
-    }
-    
-    post {
-        always {
-            echo '🧹 Cleaning workspace...'
-            cleanWs()
-        }
-        success {
-            echo '✅ Pipeline succeeded!'
-        }
-        failure {
-            echo '❌ Pipeline failed!'
         }
     }
 }
