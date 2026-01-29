@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'gcc:12.2.0'
+            args '--user root'  // Run as root inside container
+        }
+    }
     
     environment {
         BUILD_DIR = 'build'
@@ -9,11 +14,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo '📥 Checking out source code...'
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '*/main']],
-                    userRemoteConfigs: [[url: 'https://github.com/Guru-BS/Repo123.git']]
-                ])
+                checkout scm
             }
         }
         
@@ -25,8 +26,6 @@ pipeline {
                     apt-get install -y \
                         cmake \
                         make \
-                        gcc \
-                        g++ \
                         libgtest-dev
                     
                     # Build Google Test
