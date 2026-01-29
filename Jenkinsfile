@@ -1,150 +1,121 @@
 pipeline {
-    agent {
-        docker {
-            image 'gcc:11.2.0'
-            args '-v /tmp:/tmp'
-        }
-    }
+    agent any
     
     environment {
-        PROJECT_NAME = 'simple-calculator'
         BUILD_DIR = 'build'
     }
     
     stages {
         stage('Checkout') {
             steps {
-                echo 'Checking out source code...'
-                checkout scm
+                echo '📥 Checking out source code...'
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[url: 'https://github.com/Guru-BS/Repo123.git']]
+                ])
             }
         }
         
         stage('Install Dependencies') {
             steps {
-                echo 'Installing build dependencies...'
+                echo '📦 Installing dependencies...'
                 sh '''
                     apt-get update
                     apt-get install -y \
                         cmake \
                         make \
-                        libgtest-dev \
-                        googletest \
-                        git
+                        gcc \
+                        g++ \
+                        libgtest-dev
                     
-                    # Build GTest from source if needed
+                    # Build Google Test
                     cd /usr/src/gtest
                     cmake CMakeLists.txt
                     make
-                    cp *.a /usr/lib
+                    cp lib/*.a /usr/lib
+                    cd -
                 '''
             }
         }
         
         stage('Build') {
             steps {
-                echo 'Building project...'
+                echo '🔨 Building project...'
                 sh '''
+                    rm -rf ${BUILD_DIR}
                     mkdir -p ${BUILD_DIR}
                     cd ${BUILD_DIR}
                     cmake .. -DBUILD_TESTS=ON
-                    make -j$(nproc)
+                    make -j4
+                    echo "=== Build completed ==="
                     ls -la
                 '''
             }
         }
         
-        stage('Run Tests') {
+        stage('Test') {
             steps {
-                echo 'Running unit tests...'
+                echo '🧪 Running tests...'
                 sh '''
                     cd ${BUILD_DIR}
-                    # Run tests with verbose output
+                    echo "=== Test Results ==="
                     ./tests/calculator_test --gtest_color=yes
-                    
-                    # Generate test report
-                    ./tests/calculator_test --gtest_output=xml:test_results.xml
+                    ./tests/calculator_test --gtest_output=xml:test-results.xml
                 '''
             }
             post {
                 always {
-                    echo 'Collecting test results...'
-                    junit 'build/test_results.xml'
+                    junit 'build/test-results.xml'
                 }
             }
         }
         
-        stage('Static Analysis') {
+        stage('Run Application') {
             steps {
-                echo 'Running static analysis...'
-                sh '''
-                    # Install cppcheck if not present
-                    if ! command -v cppcheck &> /dev/null; then
-                        apt-get install -y cppcheck
-                    fi
-                    
-                    # Run static analysis
-                    cppcheck --enable=all --inconclusive \
-                             --suppress=missingIncludeSystem \
-                             src/ tests/ 2> cppcheck-report.xml || true
-                '''
-            }
-            post {
-                always {
-                    recordIssues(
-                        tools: [cppCheck(pattern: 'cppcheck-report.xml')]
-                    )
-                }
-            }
-        }
-        
-        stage('Build Application') {
-            steps {
-                echo 'Building main application...'
+                echo '🚀 Running application...'
                 sh '''
                     cd ${BUILD_DIR}
-                    # Verify the executable was built
-                    file calculator_app
+                    echo "=== Application Output ==="
                     ./calculator_app
                 '''
             }
         }
         
         stage('Package') {
-            when {
-                branch 'main'
-            }
             steps {
-                echo 'Creating package...'
+                echo '📦 Creating package...'
                 sh '''
                     mkdir -p package
                     cp ${BUILD_DIR}/calculator_app package/
+                    cp ${BUILD_DIR}/tests/calculator_test package/
                     cp -r src package/
                     cp CMakeLists.txt package/
-                    cp README.md package/
+                    cp Jenkinsfile package/
                     
-                    # Create tar archive
-                    tar -czf ${PROJECT_NAME}-${BUILD_NUMBER}.tar.gz package/
+                    echo "Calculator CI/CD Build" > package/README.txt
+                    echo "Build Number: ${BUILD_NUMBER}" >> package/README.txt
+                    echo "Build Date: $(date)" >> package/README.txt
+                    
+                    tar -czf calculator-${BUILD_NUMBER}.tar.gz package/
+                    echo "=== Package created ==="
+                    ls -lh *.tar.gz
                 '''
+                archiveArtifacts artifacts: '*.tar.gz', fingerprint: true
             }
         }
     }
     
     post {
         always {
-            echo 'Cleaning up workspace...'
+            echo '🧹 Cleaning workspace...'
             cleanWs()
         }
         success {
-            echo 'Pipeline succeeded!'
-            // You can add notifications here
-            // slackSend(color: 'good', message: "Build ${env.BUILD_NUMBER} succeeded")
+            echo '✅ Pipeline succeeded!'
         }
         failure {
-            echo 'Pipeline failed!'
-            // slackSend(color: 'danger', message: "Build ${env.BUILD_NUMBER} failed")
-        }
-        unstable {
-            echo 'Pipeline is unstable!'
+            echo '❌ Pipeline failed!'
         }
     }
 }
