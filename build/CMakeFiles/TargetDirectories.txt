@@ -1,0 +1,9 @@
+/mnt/c/DevOpsProject/build/CMakeFiles/calculator.dir
+/mnt/c/DevOpsProject/build/CMakeFiles/calculator_app.dir
+/mnt/c/DevOpsProject/build/CMakeFiles/test.dir
+/mnt/c/DevOpsProject/build/CMakeFiles/edit_cache.dir
+/mnt/c/DevOpsProject/build/CMakeFiles/rebuild_cache.dir
+/mnt/c/DevOpsProject/build/tests/CMakeFiles/calculator_test.dir
+/mnt/c/DevOpsProject/build/tests/CMakeFiles/test.dir
+/mnt/c/DevOpsProject/build/tests/CMakeFiles/edit_cache.dir
+/mnt/c/DevOpsProject/build/tests/CMakeFiles/rebuild_cache.dir

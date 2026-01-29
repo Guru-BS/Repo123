@@ -1,9 +1,12 @@
 #ifndef CALCULATOR_H
 #define CALCULATOR_H
 
-double add(double a, double b);
-double subtract(double a, double b);
-double multiply(double a, double b);
-double divide(double a, double b);
+// Function declarations
+int add(int a, int b);
+int subtract(int a, int b);
+int multiply(int a, int b);
+float divide(int a, int b);
+int factorial(int n);
+int is_prime(int n);
 
 #endif

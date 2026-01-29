@@ -1,12 +1,31 @@
-# Find GTest
+# Find GoogleTest (requires C++)
 find_package(GTest REQUIRED)
+find_package(Threads REQUIRED)
 
-# Test executable
-add_executable(test_calculator test_calculator.c)
-target_include_directories(test_calculator PRIVATE ../src)
-target_link_libraries(test_calculator GTest::gtest GTest::gtest_main)
+# Explicitly specify this is a C++ executable
+add_executable(calculator_test 
+    calculator_test.cpp
+)
 
-# Link calculator functions
-target_sources(test_calculator PRIVATE ../src/calculator.c)
+# Tell CMake this is a C++ target
+set_target_properties(calculator_test PROPERTIES
+    CXX_STANDARD 11
+    CXX_STANDARD_REQUIRED ON
+)
 
-add_test(NAME calculator_tests COMMAND test_calculator)
+# Link with GTest and our library
+target_link_libraries(calculator_test
+    GTest::gtest
+    GTest::gtest_main
+    calculator
+    pthread
+)
+
+# Include directories
+target_include_directories(calculator_test
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src
+)
+
+# Add test discovery
+gtest_discover_tests(calculator_test)
